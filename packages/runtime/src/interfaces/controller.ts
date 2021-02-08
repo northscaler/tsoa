@@ -1,3 +1,6 @@
+/**
+ * Base class provided for controllers that are instantiated on each request.
+ */
 export class Controller {
   private statusCode?: number = undefined;
   private headers = {} as { [name: string]: string | string[] | undefined };

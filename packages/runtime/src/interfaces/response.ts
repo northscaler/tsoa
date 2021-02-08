@@ -61,3 +61,9 @@ export type HttpStatusCodeLiteral =
   | 511;
 
 export type TsoaResponse<T extends HttpStatusCodeLiteral, BodyType, HeaderType extends IsValidHeader<HeaderType> = {}> = (status: T, data: BodyType, headers?: HeaderType) => any;
+
+export interface CustomResponse<HeaderType, BodyType = any> {
+  statusCode?: HttpStatusCodeLiteral;
+  headers?: HeaderType;
+  body?: BodyType;
+}

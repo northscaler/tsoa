@@ -75,15 +75,17 @@ export function RegisterRoutes(router: KoaRouter) {
               context.throw(error.status, JSON.stringify({ fields: error.fields }));
             }
 
-            {{#if ../../iocModule}}
-            const container: IocContainer = typeof iocContainer === 'function' ? (iocContainer as IocContainerFactory)(context.request) : iocContainer;
+            {{#if ../newInstancePerRequest}}
+            const controller = new {{../name}}();
+            {{else}} {{! either ../iocContainer is truthy or ../newInstancePerRequest is falsey, which implies getting from container }}
+            const container: IocContainer = typeof iocContainer === 'function' ? (iocContainer as IocContainerFactory)(request) : iocContainer;
 
             const controller: any = container.get<{{../name}}>({{../name}});
+            {{#if ../extendsController}}
             if (typeof controller['setStatus'] === 'function') {
-                controller.setStatus(undefined);
+              controller.setStatus(undefined);
             }
-            {{else}}
-            const controller = new {{../name}}();
+            {{/if}}
             {{/if}}
 
             const promise = controller.{{name}}.apply(controller, validatedArgs as any);

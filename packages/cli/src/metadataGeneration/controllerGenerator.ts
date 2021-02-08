@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import { isIdentifier, SyntaxKind } from 'typescript';
 import { getDecorators, getDecoratorValues, getSecurites } from './../utils/decoratorUtils';
 import { GenerateMetadataError } from './exceptions';
 import { MetadataGenerator } from './metadataGenerator';
@@ -13,6 +14,8 @@ export class ControllerGenerator {
   private readonly security?: Tsoa.Security[];
   private readonly isHidden?: boolean;
   private readonly commonResponses: Tsoa.Response[];
+  private readonly newInstancePerRequest: boolean = true;
+  private readonly extendsController: boolean = false;
 
   constructor(private readonly node: ts.ClassDeclaration, private readonly current: MetadataGenerator) {
     this.path = this.getPath();
@@ -20,6 +23,8 @@ export class ControllerGenerator {
     this.security = this.getSecurity();
     this.isHidden = this.getIsHidden();
     this.commonResponses = this.getCommonResponses();
+    this.newInstancePerRequest = this.getNewInstancePerRequest();
+    this.extendsController = this.sniffExtendsController(node);
   }
 
   public IsValid() {
@@ -41,6 +46,8 @@ export class ControllerGenerator {
       methods: this.buildMethods(),
       name: this.node.name.text,
       path: this.path || '',
+      newInstancePerRequest: this.newInstancePerRequest,
+      extendsController: this.extendsController,
     };
   }
 
@@ -131,5 +138,42 @@ export class ControllerGenerator {
     }
 
     return true;
+  }
+
+  private getNewInstancePerRequest(): boolean {
+    const newInstancePerRequest = getDecorators(this.node, identifier => identifier.text === 'NewInstancePerRequest');
+    const noNewInstancePerRequest = getDecorators(this.node, identifier => identifier.text === 'NoNewInstancePerRequest');
+
+    if (newInstancePerRequest.length > 1) {
+      throw new GenerateMetadataError(`Only one NewInstancePerRequest decorator allowed in '${this.node.name!.text}' class.`);
+    }
+    if (noNewInstancePerRequest?.length > 1) {
+      throw new GenerateMetadataError(`Only one NoNewInstancePerRequest decorator allowed in '${this.node.name!.text}' class.`);
+    }
+
+    const nipr = !!newInstancePerRequest[0];
+    const nnipr = !!noNewInstancePerRequest[0];
+
+    if (nipr && nnipr) {
+      throw new GenerateMetadataError(`NewInstancePerRequest and NoNewInstancePerRequest are mutually exclusive in '${this.node.name!.text}' class.`);
+    }
+
+    if (!nipr && !nnipr) {
+      return true; // default behavior for backward compatibility is to assume NewInstancePerRequest is present
+    }
+
+    if (!nipr && this.extendsController) {
+      throw new GenerateMetadataError(`NoNewInstancePerRequest decorated class '${this.node.name!.text}' should not extend Controller`);
+    }
+
+    return nipr;
+  }
+
+  private sniffExtendsController(node: ts.ClassDeclaration) {
+    const expression = node.heritageClauses?.find(clause => clause.token === SyntaxKind.ExtendsKeyword)?.types[0]?.expression;
+    if (expression && isIdentifier(expression)) {
+      return expression.escapedText === 'Controller'; // TODO: ensure it's _our_ controller
+    }
+    return false;
   }
 }

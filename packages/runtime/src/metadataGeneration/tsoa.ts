@@ -11,6 +11,8 @@ export namespace Tsoa {
     methods: Method[];
     name: string;
     path: string;
+    newInstancePerRequest: boolean;
+    extendsController: boolean;
   }
 
   export interface Method {
