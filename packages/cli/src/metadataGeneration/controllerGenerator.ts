@@ -1,5 +1,4 @@
 import * as ts from 'typescript';
-import { isIdentifier, SyntaxKind } from 'typescript';
 import { getDecorators, getDecoratorValues, getSecurites } from './../utils/decoratorUtils';
 import { GenerateMetadataError } from './exceptions';
 import { MetadataGenerator } from './metadataGenerator';
@@ -170,10 +169,30 @@ export class ControllerGenerator {
   }
 
   private sniffExtendsController(node: ts.ClassDeclaration) {
-    const expression = node.heritageClauses?.find(clause => clause.token === SyntaxKind.ExtendsKeyword)?.types[0]?.expression;
-    if (expression && isIdentifier(expression)) {
-      return expression.escapedText === 'Controller'; // TODO: ensure it's _our_ controller
+    const getMethodNamesRecursivelyFrom = (classNode: ts.ClassDeclaration) => {
+      const methodNames = classNode.members.reduce((accum, next) => {
+        if (ts.isMethodDeclaration(next)) {
+          const id = next.name;
+          if (ts.isIdentifier(id)) accum.push(id.escapedText as string);
+        }
+        return accum;
+      }, [] as string[]);
+
+      const parent = classNode.heritageClauses?.find(clause => clause.token === ts.SyntaxKind.ExtendsKeyword)?.types[0];
+      if (parent && ts.isClassDeclaration(parent)) {
+        return methodNames.concat(getMethodNamesRecursivelyFrom(parent)); // recurse
+      } else {
+        return methodNames;
+      }
+    };
+
+    const methodNames = getMethodNamesRecursivelyFrom(node);
+
+    for (const requiredMethodName of ['getHeaders', 'getStatus', 'setStatus']) {
+      if (!methodNames.includes(requiredMethodName)) {
+        return false;
+      }
     }
-    return false;
+    return true;
   }
 }

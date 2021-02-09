@@ -85,17 +85,19 @@ export function RegisterRoutes(server: any) {
                         throw boomErr;
                     }
 
-                    {{#if ../newInstancePerRequest}}
+                    {{#unless ../../iocModule }}
                     const controller = new {{../name}}();
-                    {{else}} {{! either ../iocContainer is truthy or ../newInstancePerRequest is falsey, which implies getting from container }}
+                    {{else}}
                     const container: IocContainer = typeof iocContainer === 'function' ? (iocContainer as IocContainerFactory)(request) : iocContainer;
 
                     const controller: any = container.get<{{../name}}>({{../name}});
+                    {{/unless}}
+
                     {{#if ../extendsController}}
                     if (typeof controller['setStatus'] === 'function') {
-                        controller.setStatus(undefined);
+                      // @ts-ignore
+                      controller.setStatus(undefined);
                     }
-                    {{/if}}
                     {{/if}}
 
                     const promise = controller.{{name}}.apply(controller, validatedArgs as any);

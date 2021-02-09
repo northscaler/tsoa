@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as handlebars from 'handlebars';
 import * as path from 'path';
 import { ExtendedRoutesConfig } from '../cli';
-import { Tsoa, TsoaRoute, assertNever } from '@tsoa/runtime';
+import { assertNever, Tsoa, TsoaRoute } from '@tsoa/runtime';
 import { fsReadFile, fsWriteFile } from '../utils/fs';
 import { isRefType } from '../utils/internalTypeGuards';
 import { normalisePath } from './../utils/pathUtils';
@@ -87,6 +87,8 @@ export class RouteGenerator {
           }),
           modulePath: this.getRelativeImportPath(controller.location),
           name: controller.name,
+          newInstancePerRequest: controller.newInstancePerRequest,
+          extendsController: controller.extendsController,
           path: normalisedControllerPath,
         };
       }),

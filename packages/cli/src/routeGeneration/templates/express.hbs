@@ -72,16 +72,19 @@ export function RegisterRoutes(app: express.Router) {
                 return next(err);
             }
 
-            {{#if ../newInstancePerRequest}}
-            {{else}} {{! either ../iocContainer is truthy or ../newInstancePerRequest is falsey, which implies getting from container }}
+            {{#unless ../../iocModule }}
+            const controller = new {{../name}}();
+            {{else}}
             const container: IocContainer = typeof iocContainer === 'function' ? (iocContainer as IocContainerFactory)(request) : iocContainer;
 
             const controller: any = container.get<{{../name}}>({{../name}});
+            {{/unless}}
+
             {{#if ../extendsController}}
-              if (typeof controller['setStatus'] === 'function') {
+            if (typeof controller['setStatus'] === 'function') {
+              // @ts-ignore
               controller.setStatus(undefined);
-              }
-            {{/if}}
+            }
             {{/if}}
 
             const promise = controller.{{name}}.apply(controller, validatedArgs as any);
