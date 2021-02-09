@@ -78,6 +78,8 @@ describe('RouteGenerator', () => {
               methods: [],
               name: '',
               path: '',
+              newInstancePerRequest: true,
+              extendsController: true,
             },
           ],
           referenceTypeMap: {},
