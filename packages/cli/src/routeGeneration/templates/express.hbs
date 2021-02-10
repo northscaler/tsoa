@@ -80,10 +80,10 @@ export function RegisterRoutes(app: express.Router) {
             const controller: any = container.get<{{../name}}>({{../name}});
             {{/unless}}
 
-            {{#if ../extendsController}}
+            {{#if ../isControllerLike}}
             if (typeof controller['setStatus'] === 'function') {
               // @ts-ignore
-              controller.setStatus(undefined);
+              controller.setStatus(undefined); // ts-ignore needed b/c setStatus signature doesn't allow undefined
             }
             {{/if}}
 

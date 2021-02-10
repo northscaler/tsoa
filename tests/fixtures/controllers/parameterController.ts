@@ -1,4 +1,4 @@
-import { Body, BodyProp, Get, Header, Path, Post, Query, Request, Route, Res, TsoaResponse } from '@tsoa/runtime';
+import { Body, BodyProp, Get, Header, Path, Post, Query, Request, Res, Route, TsoaResponse } from '@tsoa/runtime';
 import { Gender, ParameterTestModel } from '../testModel';
 
 @Route('ParameterTest')
@@ -323,5 +323,24 @@ export class ParameterController {
   @Get('Res')
   public async getRes(@Res() res: TsoaResponse<400, { name: string }>): Promise<void> {
     res?.(400, { name: 'alternate response' });
+  }
+
+  /**
+   * Conditional alternate responses
+   * @param num Numeric literal.  If 400, causes a 400, else if 404, causes a 404, else returns an object with a `num`
+   * property equal to the value of this parameter.
+   * @param res400 thrown if `num` is 400
+   * @param res404 thrown if `num` is 404
+   */
+  @Get('ConditionalRes')
+  public async getConditionalRes(@Query() num: number, @Res() res400: TsoaResponse<400, { name: string }>, @Res() res404: TsoaResponse<404, { name: string }>): Promise<{ num: number }> {
+    switch (num) {
+      case 400:
+        return res400?.(400, { name: '400 response' });
+      case 404:
+        return res404?.(404, { name: '404 response' });
+      default:
+        return { num }; // TODO: if num is even, status code should be 200, else 202
+    }
   }
 }

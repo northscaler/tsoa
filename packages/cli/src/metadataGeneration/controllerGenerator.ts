@@ -14,7 +14,7 @@ export class ControllerGenerator {
   private readonly isHidden?: boolean;
   private readonly commonResponses: Tsoa.Response[];
   private readonly newInstancePerRequest: boolean = true;
-  private readonly extendsController: boolean = false;
+  private readonly isControllerLike: boolean = false;
 
   constructor(private readonly node: ts.ClassDeclaration, private readonly current: MetadataGenerator) {
     this.path = this.getPath();
@@ -23,7 +23,7 @@ export class ControllerGenerator {
     this.isHidden = this.getIsHidden();
     this.commonResponses = this.getCommonResponses();
     this.newInstancePerRequest = this.getNewInstancePerRequest();
-    this.extendsController = this.sniffExtendsController(node);
+    this.isControllerLike = this.exhibitsControllerProtocol(node);
   }
 
   public IsValid() {
@@ -46,7 +46,7 @@ export class ControllerGenerator {
       name: this.node.name.text,
       path: this.path || '',
       newInstancePerRequest: this.newInstancePerRequest,
-      extendsController: this.extendsController,
+      extendsController: this.isControllerLike,
     };
   }
 
@@ -161,14 +161,14 @@ export class ControllerGenerator {
       return true; // default behavior for backward compatibility is to assume NewInstancePerRequest is present
     }
 
-    if (!nipr && this.extendsController) {
+    if (!nipr && this.isControllerLike) {
       throw new GenerateMetadataError(`NoNewInstancePerRequest decorated class '${this.node.name!.text}' should not extend Controller`);
     }
 
     return nipr;
   }
 
-  private sniffExtendsController(node: ts.ClassDeclaration) {
+  private exhibitsControllerProtocol(node: ts.ClassDeclaration) {
     const getMethodNamesRecursivelyFrom = (classNode: ts.ClassDeclaration) => {
       const methodNames = classNode.members.reduce((accum, next) => {
         if (ts.isMethodDeclaration(next)) {

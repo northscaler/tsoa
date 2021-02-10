@@ -83,7 +83,7 @@ export function RegisterRoutes(router: KoaRouter) {
             const controller: any = container.get<{{../name}}>({{../name}});
             {{/unless}}
 
-            {{#if ../extendsController}}
+            {{#if ../isControllerLike}}
             if (typeof controller['setStatus'] === 'function') {
               // @ts-ignore
               controller.setStatus(undefined);
